@@ -508,7 +508,7 @@ sub splice_region {
 sub within_intron {
     my ($bvfoa, $feat, $bvfo, $bvf) = @_;
     $bvfo ||= $bvfoa->base_variation_feature_overlap;
-
+    
     return $bvfoa->_intron_effects($feat, $bvfo, $bvf)->{intronic};
 }
 
@@ -552,17 +552,16 @@ sub within_cdna {
     $feat ||= $bvfo->feature;
     
     my $cdna_coords = $bvfo->cdna_coords;
-    
+    my $shift_length = $bvf->{shifted_flag} ? $feat->strand * $bvf->{shift_length} : 0;
     if (@$cdna_coords > 0) {
         for my $coord (@$cdna_coords) {
             if ($coord->isa('Bio::EnsEMBL::Mapper::Coordinate')) {
-                if ($coord->end > 0 && $coord->start <= $feat->length) {
+                if ($coord->end + $shift_length > 0 && $coord->start + $shift_length <= $feat->length) {
                     return 1;
                 }
             }
         }
     }
-    
     # we also need to check if the vf is in a frameshift intron within the cDNA
 
     if ($bvfoa->_intron_effects->{within_frameshift_intron}) {
@@ -655,6 +654,7 @@ sub _get_peptide_alleles {
     my $cache = $bvfoa->{_predicate_cache} ||= {};
 
     unless(exists($cache->{_get_peptide_alleles})) {
+      $DB::single = 1;
         my @alleles = ();
 
         #return () if frameshift(@_);
@@ -723,7 +723,7 @@ sub _get_alleles {
 
 sub start_lost {
     my ($bvfoa, $feat, $bvfo, $bvf) = @_;
-
+    
     # use cache for this method as it gets called a lot
     my $cache = $bvfoa->{_predicate_cache} ||= {};
 
@@ -831,8 +831,9 @@ sub _overlaps_start_codon {
         return 0 if grep {$_->code eq 'cds_start_NF'} @{$feat->get_all_Attributes()};
 
         my ($cdna_start, $cdna_end) = ($bvfo->cdna_start, $bvfo->cdna_end);
+        $cdna_start += $bvfo->variation_feature->{shift_length} if $bvfo->variation_feature->{shifted_flag};
+        $cdna_end += $bvfo->variation_feature->{shift_length} if $bvfo->variation_feature->{shifted_flag};
         return 0 unless $cdna_start && $cdna_end;
-        
         $cache->{overlaps_start_codon} = overlap(
             $cdna_start, $cdna_end,
             $feat->cdna_coding_start, $feat->cdna_coding_start + 2
@@ -1036,7 +1037,7 @@ sub stop_gained {
 
 sub stop_lost {
     my ($bvfoa, $feat, $bvfo, $bvf) = @_;
-
+$DB::single = 1;
     # use cache for this method as it gets called a lot
     my $cache = $bvfoa->{_predicate_cache} ||= {};
 
@@ -1263,13 +1264,16 @@ sub partial_codon {
         $cache->{_partial_codon} = 0;
 
         $bvfo ||= $bvfoa->base_variation_feature_overlap;
+        #my $dup_bvfoa = {%$bvfoa};
+        #$bvfoa->_return_3prime(1);
+        #return 0 unless defined $bvfo->translation_start(undef, $bvfoa->{shift_object}->{shift_length});
+        return 0 unless defined $bvfo->translation_start();
         
-        return 0 unless defined $bvfo->translation_start;
-
+        delete($bvfoa->{shift_object});
         my $cds_length = length $bvfo->_translateable_seq;
 
+        #my $codon_cds_start = ($bvfo->translation_start(undef, $bvfoa->{shift_object}->{shift_length}) * 3) - 2;
         my $codon_cds_start = ($bvfo->translation_start * 3) - 2;
-
         my $last_codon_length = $cds_length - ($codon_cds_start - 1);
         
         $cache->{_partial_codon} = ( $last_codon_length < 3 and $last_codon_length > 0 );
