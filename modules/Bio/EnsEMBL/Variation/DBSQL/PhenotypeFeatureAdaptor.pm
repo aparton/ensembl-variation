@@ -1074,6 +1074,32 @@ sub fetch_all {
   
 }
 
+
+sub get_PhenotypeFeatures_by_location {
+  my $self = shift;
+  my $seq_region_id = shift;
+  my $seq_region_start = shift;
+  my $seq_region_end = shift;
+  
+  throw("Cannot fetch attributes without dbID") unless defined($seq_region_id);
+  throw("Cannot fetch attributes without dbID") unless defined($seq_region_start);
+  throw("Cannot fetch attributes without dbID") unless defined($seq_region_end);
+  
+  my $attribs = {};
+  
+  my $extra_sql = " pf.seq_region_id = '$seq_region_id' AND pf.seq_region_start = '$seq_region_start' AND pf.seq_region_end = '$seq_region_end' ";
+  
+  # Add the constraint for significant data
+  $extra_sql = $self->_is_significant_constraint($extra_sql);
+  
+  return $self->generic_fetch("$extra_sql");
+}
+
+
+
+
+
+
 # stub method used by web
 sub _check_gene_by_HGNC {
   my $self = shift;
