@@ -1087,7 +1087,7 @@ sub get_PhenotypeFeatures_by_location {
   
   my $attribs = {};
   
-  my $extra_sql = " pf.seq_region_id = '$seq_region_id' AND pf.seq_region_start = '$seq_region_start' AND pf.seq_region_end = '$seq_region_end' ";
+  my $extra_sql = " pf.seq_region_id = '$seq_region_id' AND pf.seq_region_start >= '$seq_region_start' AND pf.seq_region_end <= '$seq_region_end' ";
   
   # Add the constraint for significant data
   $extra_sql = $self->_is_significant_constraint($extra_sql);
@@ -1095,7 +1095,68 @@ sub get_PhenotypeFeatures_by_location {
   return $self->generic_fetch("$extra_sql");
 }
 
+sub get_PhenotypeFeatureAttribs_by_location {
+  my $self = shift;
+  my $seq_region_id = shift;
+  my $seq_region_start = shift;
+  my $seq_region_end = shift;
 
+  throw("Cannot fetch attributes without dbID") unless defined($seq_region_id);
+  throw("Cannot fetch attributes without dbID") unless defined($seq_region_start);
+  throw("Cannot fetch attributes without dbID") unless defined($seq_region_end);
+  
+  my $extra_sql = $self->_is_significant_constraint();
+
+  my $sth = $self->dbc->prepare(qq{
+    SELECT
+      CONCAT_WS('; ',
+        CONCAT('id=', pf.object_id), CONCAT('pf_id=', pf.phenotype_feature_id),
+        GROUP_CONCAT(at.code, "=", concat('', pfa.value, '') SEPARATOR '; ')
+      ) AS attribute
+
+      FROM
+        phenotype p,
+        phenotype_feature pf
+
+      LEFT JOIN phenotype_feature_attrib pfa
+        ON pf.phenotype_feature_id = pfa.phenotype_feature_id
+      LEFT JOIN attrib_type `at`
+          ON pfa.attrib_type_id = at.attrib_type_id
+        
+
+      WHERE pf.phenotype_id = p.phenotype_id
+      AND pf.seq_region_id = ?
+      AND pf.seq_region_start >= ?
+      AND pf.seq_region_end <= ?
+      AND EXISTS(select value from phenotype_feature_attrib where phenotype_feature_id = pf.phenotype_feature_id && attrib_type_id = 483)
+
+      GROUP BY pf.phenotype_feature_id
+      ORDER BY pf.seq_region_id, pf.seq_region_start, pf.seq_region_end
+    AND pfa.value = ?
+  });
+  
+  $sth->bind_param(1, $seq_region_id, SQL_VARCHAR);
+  $sth->bind_param(2, $seq_region_start, SQL_VARCHAR);
+  $sth->bind_param(3, $seq_region_end, SQL_VARCHAR);
+  $sth->execute();
+  
+  my $output_string;
+  my $hash;
+  my $internal_hash;
+  $sth->bind_columns(\$output_string);
+  while ($sth->fetch){
+    foreach my $id(split/\;/,$output_string){
+        my ($key, $value) = split /\=/, $id;
+        $key =~ s/^\s+|\s+$//g;
+        $internal_hash->{$key} = $value;
+    }
+    $hash->{$internal_hash->{pf_id}} = $internal_hash;
+  }
+
+  $sth->finish();
+  
+  return $hash;
+}
 
 
 
