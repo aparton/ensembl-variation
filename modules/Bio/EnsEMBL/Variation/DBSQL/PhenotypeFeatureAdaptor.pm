@@ -1109,6 +1109,7 @@ sub get_PhenotypeFeatureAttribs_by_location {
 
   my $sth = $self->dbc->prepare(qq{
     SELECT
+      pf.phenotype_feature_id,
       CONCAT_WS('; ',
         CONCAT('id=', pf.object_id), CONCAT('pf_id=', pf.phenotype_feature_id),
         GROUP_CONCAT(at.code, "=", concat('', pfa.value, '') SEPARATOR '; ')
@@ -1140,17 +1141,17 @@ sub get_PhenotypeFeatureAttribs_by_location {
   $sth->bind_param(3, $seq_region_end, SQL_VARCHAR);
   $sth->execute();
   
+  my $pf_id;
   my $output_string;
   my $hash;
   my $internal_hash;
-  $sth->bind_columns(\$output_string);
+  $sth->bind_columns(\$pf_id, \$output_string);
   while ($sth->fetch){
     foreach my $id(split/\;/,$output_string){
         my ($key, $value) = split /\=/, $id;
         $key =~ s/^\s+|\s+$//g;
-        $internal_hash->{$key} = $value;
+        $hash->{$pf_id}->{$key} = $value;
     }
-    $hash->{$internal_hash->{pf_id}} = $internal_hash;
   }
 
   $sth->finish();
