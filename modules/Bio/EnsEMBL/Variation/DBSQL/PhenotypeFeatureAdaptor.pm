@@ -1109,7 +1109,7 @@ sub get_PhenotypeFeatureAttribs_by_location {
 
   my $sth = $self->dbc->prepare(qq{
     SELECT
-      pf.phenotype_feature_id,
+      CONCAT(pf.seq_region_id, ':', pf.seq_region_start, '-', pf.seq_region_end),
       CONCAT_WS('; ',
         CONCAT('id=', pf.object_id), CONCAT('pf_id=', pf.phenotype_feature_id),
         GROUP_CONCAT(at.code, "=", concat('', pfa.value, '') SEPARATOR '; ')
@@ -1133,7 +1133,6 @@ sub get_PhenotypeFeatureAttribs_by_location {
 
       GROUP BY pf.phenotype_feature_id
       ORDER BY pf.seq_region_id, pf.seq_region_start, pf.seq_region_end
-    AND pfa.value = ?
   });
   
   $sth->bind_param(1, $seq_region_id, SQL_VARCHAR);
