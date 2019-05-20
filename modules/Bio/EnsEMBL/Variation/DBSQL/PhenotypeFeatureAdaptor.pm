@@ -1143,14 +1143,16 @@ sub get_PhenotypeFeatureAttribs_by_location {
   my $pf_id;
   my $output_string;
   my $hash;
-  my $internal_hash;
   $sth->bind_columns(\$pf_id, \$output_string);
   while ($sth->fetch){
+    $hash->{$pf_id} = [] if !defined($hash->{$pf_id});
+    my $internal_hash;
     foreach my $id(split/\;/,$output_string){
-        my ($key, $value) = split /\=/, $id;
-        $key =~ s/^\s+|\s+$//g;
-        $hash->{$pf_id}->{$key} = $value;
+       my ($key, $value) = split /\=/, $id;
+       $key =~ s/^\s+|\s+$//g;
+       $internal_hash->{$key} = $value;
     }
+    push(@{$hash->{$pf_id}}, $internal_hash);
   }
 
   $sth->finish();
