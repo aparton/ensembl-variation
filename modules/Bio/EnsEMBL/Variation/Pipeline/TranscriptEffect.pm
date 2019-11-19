@@ -182,7 +182,13 @@ sub run {
         my $tv_fh = $files->{transcript_variation}->{fh};
         print $tv_fh join("\t", map {defined($_) ? $_ : '\N'} @$_)."\n" for @$data;
 
-        if($mtmp) {
+        my %biotypes_to_skip = (
+          "lncRNA" => 1,
+          "processed_pseudogene" => 1,
+          "unprocessed_pseudogene" => 1,        
+        );
+
+        if($mtmp && !$biotypes_to_skip{$transcript->biotype()}) {
           my $mtmp_data = $tva->_get_mtmp_write_data_from_tv_write_data($data);
           my $mtmp_fh = $files->{MTMP_transcript_variation}->{fh};
           print $mtmp_fh join("\t", map {defined($_) ? $_ : '\N'} @$_)."\n" for @$mtmp_data;
