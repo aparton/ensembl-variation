@@ -416,8 +416,8 @@ sub _hgvs_generic {
     foreach my $tv_allele (@{ $self->get_all_alternate_TranscriptVariationAlleles }) {
         
         #If an HGVS hash was supplied and the allele exists as key, set the HGVS notation for this allele
-        if (defined($hgvs)) {
-            my $notation = $hgvs->{$tv_allele->variation_feature_seq()};
+        if (defined($hgvs->{$tv_allele->variation_feature_seq()})) {
+	    my $notation = $hgvs->{$tv_allele->variation_feature_seq()};
             $tv_allele->$sub($notation) if defined $notation;
         }
         # Else, add the HGVS notation for this allele to the HGVS hash

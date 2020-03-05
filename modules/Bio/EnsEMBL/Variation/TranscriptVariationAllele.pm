@@ -2526,8 +2526,8 @@ sub _hgvs_generic {
     # Calculate the HGVS notation on-the-fly and pass it to the TranscriptVariation in order to distribute the result to the other alleles
     my $tv = $self->base_variation_feature_overlap;
     my $vf = $self->base_variation_feature;
-
-    $tv->$sub($vf->get_all_hgvs_notations($reference_feature,substr($reference,0,1),undef,undef,$tv));
+    my $hgvs_notations = $vf->get_all_hgvs_notations($reference_feature,substr($reference,0,1),undef,undef,$tv);
+    $tv->$sub($hgvs_notations) if scalar(keys(%{$hgvs_notations}));
   }
   
   return $self->{$sub};
