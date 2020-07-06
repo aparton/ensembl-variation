@@ -745,7 +745,8 @@ sub start_lost {
     my $cache = $bvfoa->{_predicate_cache} ||= {};
 
     unless(exists($cache->{start_lost})) {
-        # default
+
+	# default
         $cache->{start_lost} = 0;
 
         return 0 unless _overlaps_start_codon(@_);
