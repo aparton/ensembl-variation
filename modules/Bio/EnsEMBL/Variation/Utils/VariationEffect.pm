@@ -745,7 +745,6 @@ sub start_lost {
     my $cache = $bvfoa->{_predicate_cache} ||= {};
 
     unless(exists($cache->{start_lost})) {
-$DB::single = 1;
         # default
         $cache->{start_lost} = 0;
 
@@ -817,8 +816,8 @@ sub _inv_start_altered {
         my $shifting_offset = defined($bvfoa->{shift_hash}) ? $bvfoa->{shift_hash}->{shift_length} : 0;
         $cdna_start += $shifting_offset;
         $cdna_end += $shifting_offset;
-	$DB::single = 1;
-        return 0 if length($utr_and_translateable) < $cdna_end;        
+        
+	return 0 if length($utr_and_translateable) < $cdna_end;        
  
         my $vf_feature_seq = $bvfoa->feature_seq;
         $vf_feature_seq = '' if $vf_feature_seq eq '-';
