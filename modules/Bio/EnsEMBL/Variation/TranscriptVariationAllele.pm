@@ -1601,10 +1601,9 @@ sub hgvs_protein {
   my $tr          = $tv->transcript;
 
   my $adaptor_shifting_flag = 1;
-  $DB::single = 1;
   ## Check previous shift_hgvs_variants_3prime flag and act accordingly
   if (defined($vf->adaptor) && defined($vf->adaptor->db)) {
-    $adaptor_shifting_flag = $vf->adaptor->db->shift_hgvs_variants_3prime() if (defined($vf->adaptor) && defined($vf->adaptor->db));
+    $adaptor_shifting_flag = $vf->adaptor->db->shift_hgvs_variants_3prime();
   }
   elsif(defined($Bio::EnsEMBL::Variation::DBSQL::DBAdaptor::DEFAULT_SHIFT_HGVS_VARIANTS_3PRIME)){
     $adaptor_shifting_flag = $Bio::EnsEMBL::Variation::DBSQL::DBAdaptor::DEFAULT_SHIFT_HGVS_VARIANTS_3PRIME;
