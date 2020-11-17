@@ -1347,9 +1347,13 @@ sub hgvs_transcript {
 
   my $variation_feature_sequence;
   my $adaptor_shifting_flag = 1;
-  
   ## Check previous shift_hgvs_variants_3prime flag and act accordingly
-  $adaptor_shifting_flag = $vf->adaptor->db->shift_hgvs_variants_3prime() if (defined($vf->adaptor) && defined($vf->adaptor->db));
+  if (defined($vf->adaptor) && defined($vf->adaptor->db)) {
+    $adaptor_shifting_flag = $vf->adaptor->db->shift_hgvs_variants_3prime();
+  }
+  elsif(defined($Bio::EnsEMBL::Variation::DBSQL::DBAdaptor::DEFAULT_SHIFT_HGVS_VARIANTS_3PRIME)){
+    $adaptor_shifting_flag = $Bio::EnsEMBL::Variation::DBSQL::DBAdaptor::DEFAULT_SHIFT_HGVS_VARIANTS_3PRIME;
+  }
   
   my $hash_already_defined = defined($self->{shift_hash}); 
   ## Perform HGVS shift even if no_shift is on
